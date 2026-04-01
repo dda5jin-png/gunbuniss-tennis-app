@@ -25,7 +25,6 @@
 
 <div id="app" class="w-full max-w-md h-full bg-slate-50 flex flex-col relative shadow-xl">
   
-  <!-- OFFLINE BANNER -->
   <div id="offlineBanner" class="hidden bg-red-600 text-white text-center text-[11px] font-bold py-1.5 flex-shrink-0 z-[60] relative animate-pulse shadow-md">
      <i class="fa-solid fa-wifi mr-1"></i> 네트워크 연결 끊김 - 변경사항이 여러 사람에게 공유되지 않습니다
   </div>
@@ -50,7 +49,7 @@
     <!-- HOME TAB -->
     <section id="tab-home" class="tab-content active space-y-6">
       
-      <!-- Queue Registration (Responsive Grid Layout) -->
+      <!-- Queue Registration -->
       <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 relative z-30">
         <h2 class="text-base font-bold text-gray-800 mb-3 flex items-center"><i class="fa-solid fa-user-plus mr-2 text-primary"></i> 1명씩 대기 등록</h2>
         <div class="grid grid-cols-[1fr] gap-2">
@@ -84,16 +83,13 @@
 
     <!-- ARCHIVE TAB -->
     <section id="tab-archive" class="tab-content space-y-6">
-      <div class="flex justify-between items-center bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-        <h2 class="text-base font-bold text-gray-800"><i class="fa-regular fa-calendar-check mr-2 text-primary"></i>기록 조회</h2>
-        <input type="date" id="archiveDate" onchange="renderArchive()" class="border-none bg-gray-50 px-3 py-2 rounded-lg text-sm font-bold text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary">
-      </div>
       <div>
-        <h3 class="font-bold mb-3 text-gray-500 px-1">당일 경기 로그</h3>
-        <div id="archiveMatches" class="flex flex-col gap-3"></div>
+        <h3 class="text-xl font-black mb-3 px-1">📅 모임 요약 보드</h3>
+        <div id="archiveMatches"></div>
       </div>
+      
       <div class="mt-8">
-        <h3 class="text-xl font-black mb-3 px-1">회원 통계</h3>
+        <h3 class="text-xl font-black mb-3 px-1">전체 회원 누적 통계</h3>
         <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
           <table class="w-full text-left text-sm whitespace-nowrap">
             <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-200">
@@ -114,6 +110,14 @@
       </div>
 
       <div id="adminSettingsBlock" class="hidden flex flex-col gap-6">
+        
+        <!-- NEW: End Today Session -->
+        <div class="bg-red-50 rounded-2xl p-5 shadow-sm border border-red-100">
+          <h3 class="font-black mb-3 text-lg text-red-800"><i class="fa-solid fa-power-off mr-1"></i> 당일 모임 종료 (소프트 리셋)</h3>
+          <p class="text-xs text-red-600 font-bold mb-4">현재 화면에 열려있는 모든 대기열과 코트 인원만 텅 비웁니다. 다음날 모임을 새롭게 시작할 때만 누르세요. (안심하세요! 과거 승률과 데이터 게시판 기록은 100% 안전하게 보존됩니다)</p>
+          <button onclick="endTodaySession()" class="w-full bg-red-600 border border-red-700 text-white py-4 rounded-xl text-base font-black shadow-md active:scale-95">오늘 게임 완전 종료 처리</button>
+        </div>
+
         <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
           <h3 class="font-black mb-4 text-lg">진행 설정 <span class="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full ml-1 font-bold">Firebase</span></h3>
           <div class="mb-4">
@@ -145,7 +149,7 @@
           <div class="max-h-60 overflow-y-auto border border-gray-100 rounded-xl divide-y divide-gray-50" id="adminMemberList"></div>
         </div>
 
-        <button onclick="resetData()" class="w-full bg-red-50 text-red-600 border border-red-200 py-4 rounded-2xl text-base font-black">Firebase 서버 완전 초기화 (위험)</button>
+        <button onclick="resetData()" class="w-full bg-gray-50 text-gray-500 border border-gray-200 py-4 rounded-2xl text-xs font-bold mt-4">초기화: 서버 DB 자체를 영구 파괴 (절대 주의)</button>
       </div>
     </section>
   </main>
@@ -210,6 +214,7 @@
     F: { status: 'active', playing: null, assignedWaiting: [] }
   };
   let targetCourtId = null;
+  let selectedArchiveDate = null; // null = show full boards list
 
   const UUID = () => Math.random().toString(36).substring(2, 12);
   const formatDateStr = (ms) => new Date(ms).toLocaleTimeString('ko-KR', { hour: '2-digit', minute:'2-digit', hour12: false });
@@ -219,7 +224,6 @@
   // FIREBASE REALTIME SYNC
   // --------------------------------------------------------------------------
   
-  // 1. Connection state monitoring
   const connectedRef = ref(db, ".info/connected");
   onValue(connectedRef, (snap) => {
     const banner = document.getElementById('offlineBanner');
@@ -229,14 +233,10 @@
     }
   });
 
-  let hasSetDate = false;
-
-  // 2. Data Monitoring & Migration
   const dbRef = ref(db, 'tennis_data');
   onValue(dbRef, (snapshot) => {
     const data = snapshot.val();
     if(data) {
-       // Merge remote data
        appState = data.appState || appState;
        regularMembers = data.regularMembers || {};
        dailyQueue = data.dailyQueue || [];
@@ -253,7 +253,6 @@
        for(let k in regularMembers) { if(!regularMembers[k].name) regularMembers[k].name = k; }
        
     } else {
-       // FIRST TIME FIREBASE LOAD: Attempt to upload existing LocalStorage Data
        const rw = localStorage.getItem('gunbunis_tennis_v4_manual') || localStorage.getItem('gunbunis_tennis_v3') || localStorage.getItem('gunbunis_tennis_v2_f');
        if(rw) {
           const p = JSON.parse(rw);
@@ -274,14 +273,10 @@
        }
     }
     
-    if(!hasSetDate) { document.getElementById('archiveDate').value = getTodayStr(); hasSetDate = true; }
     renderUI();
   });
 
-  // 3. Centralized Save Function
-  function saveData() {
-    set(ref(db, 'tennis_data'), { appState, regularMembers, dailyQueue, courts, historyLog });
-  }
+  function saveData() { set(ref(db, 'tennis_data'), { appState, regularMembers, dailyQueue, courts, historyLog }); }
 
   // --------------------------------------------------------------------------
   // UI & LOGIC FUNCTIONS
@@ -511,27 +506,76 @@
   }
 
   function renderArchive() {
-     const dt = document.getElementById('archiveDate').value;
-     const mlist = historyLog.filter(h => h.date === dt);
      const clast = document.getElementById('archiveMatches');
      
-     if(mlist.length===0) clast.innerHTML = `<div class="p-6 text-center text-gray-400 bg-white border border-gray-100 rounded-2xl text-sm font-bold">기록이 없습니다.</div>`;
-     else {
-        clast.innerHTML = mlist.map(h => {
-           let bw = h.winner==='A' ? 'A 승리' : h.winner==='B' ? 'B 승리' : '친선무승부';
-           let badge = h.winner==='A' ? 'bg-blue-50 text-blue-700 border-blue-200' : h.winner==='B' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-gray-100 text-gray-600';
-           return `
-           <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-2">
-             <div class="flex justify-between items-center mb-3">
-               <span class="text-gray-500 font-bold text-xs"><span class="bg-gray-200 text-gray-700 px-2 py-1 rounded shadow-sm mr-2">${h.court}</span>${formatDateStr(h.completedAt)}</span>
-               <span class="${badge} px-2 py-1 rounded text-xs font-black border">${bw}</span>
-             </div>
-             <div class="flex gap-2 text-sm font-bold text-center">
-               <div class="flex-1 bg-gray-50 p-2 rounded">${h.teamA.join(', ')}</div>
-               <div class="flex-1 bg-gray-50 p-2 rounded">${h.teamB.join(', ')}</div>
-             </div>
-           </div>`;
+     if(!selectedArchiveDate) {
+        // --- 모임 카드 리스트 ---
+        const dates = [...new Set(historyLog.map(h => h.date))].sort((a,b) => b.localeCompare(a));
+        if(dates.length === 0) {
+           clast.innerHTML = `<div class="p-6 text-center text-gray-400 bg-white border border-gray-100 rounded-2xl text-sm font-bold shadow-sm">진행된 테니스 모임 기록이 없습니다.</div>`;
+        } else {
+           clast.innerHTML = dates.map(d => {
+              const mlist = historyLog.filter(h => h.date === d);
+              const players = new Set();
+              mlist.forEach(m => { m.teamA.forEach(n => players.add(n)); m.teamB.forEach(n => players.add(n)); });
+              
+              return `
+              <div onclick="selectArchiveDate('${d}')" class="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 mb-3 active:scale-95 cursor-pointer transition-transform flex justify-between items-center group">
+                 <div>
+                    <h4 class="font-black text-lg text-gray-800 mb-2">${d} 모임</h4>
+                    <span class="text-xs font-bold text-gray-600 bg-gray-100 px-2.5 py-1 rounded inline-block">참석 ${players.size}명</span>
+                    <span class="text-xs font-bold text-gray-600 bg-gray-100 px-2.5 py-1 rounded inline-block ml-1">진행 ${mlist.length}경기</span>
+                 </div>
+                 <i class="fa-solid fa-chevron-right text-gray-300 group-hover:text-primary text-xl"></i>
+              </div>`;
+           }).join('');
+        }
+     } else {
+        // --- 특정 날짜 요약 게시판 ---
+        const d = selectedArchiveDate;
+        const mlist = historyLog.filter(h => h.date === d);
+        const players = new Set();
+        mlist.forEach(m => { m.teamA.forEach(n => players.add(n)); m.teamB.forEach(n => players.add(n)); });
+        
+        let playerNames = [...players].sort().map(n => {
+           const p = regularMembers[n];
+           const ntrp = p ? p.ntrp : '?';
+           return `<span class="bg-white text-blue-800 text-xs font-black px-2.5 py-1.5 rounded-lg border border-blue-100 shadow-sm inline-block mb-1.5 mr-1.5">${n} <span class="text-blue-400 opacity-80">N.${ntrp}</span></span>`;
         }).join('');
+
+        let html = `
+        <button onclick="selectArchiveDate(null)" class="mb-4 text-sm font-bold text-gray-600 bg-white border border-gray-200 shadow-sm px-4 py-2.5 rounded-xl active:scale-95 flex items-center"><i class="fa-solid fa-arrow-left mr-2"></i>목록으로 돌아가기</button>
+        
+        <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5 mb-5 shadow-sm relative overflow-hidden">
+           <div class="absolute -right-5 -bottom-5 text-blue-200 opacity-30 text-[80px]"><i class="fa-solid fa-users"></i></div>
+           <h3 class="font-black text-xl text-blue-900 mb-1">${d} 모임 요약</h3>
+           <div class="text-sm text-blue-700 font-bold mb-4 opacity-90">당일 매치 참여자 총 ${players.size}명</div>
+           <div class="relative z-10">${playerNames}</div>
+        </div>
+
+        <h3 class="font-black text-lg text-gray-800 mb-3 px-1">총 ${mlist.length}경기 결과</h3>
+        `;
+
+        if(mlist.length===0) html += `<div class="p-6 text-center text-gray-400 bg-white border border-gray-100 rounded-2xl text-sm font-bold shadow-sm">기록이 없습니다.</div>`;
+        else {
+           html += mlist.map(h => {
+              let bw = h.winner==='A' ? 'A 승리' : h.winner==='B' ? 'B 승리' : '무승부';
+              let badge = h.winner==='A' ? 'bg-blue-50 text-blue-700 border-blue-200' : h.winner==='B' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-gray-100 text-gray-600';
+              return `
+              <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-200 mb-2">
+                <div class="flex justify-between items-center mb-3">
+                  <span class="text-gray-500 font-bold text-xs"><span class="bg-gray-200 text-gray-700 px-2 py-1 rounded shadow-sm mr-2">${h.court}</span>${formatDateStr(h.completedAt)}</span>
+                  <span class="${badge} px-2 py-1 rounded text-xs font-black border tracking-wide">${bw}</span>
+                </div>
+                <div class="flex gap-2 text-sm font-black text-center text-gray-800">
+                  <div class="flex-1 bg-gray-50 py-3 rounded-xl border border-gray-100">${h.teamA.join(', ')}</div>
+                  <div class="text-xs text-red-300 italic pt-3 px-1">VS</div>
+                  <div class="flex-1 bg-gray-50 py-3 rounded-xl border border-gray-100">${h.teamB.join(', ')}</div>
+                </div>
+              </div>`;
+           }).join('');
+        }
+        clast.innerHTML = html;
      }
 
      const sb = document.getElementById('statsTableBody');
@@ -544,6 +588,23 @@
               <td class="px-3 py-4 text-center text-xs font-bold text-gray-500">${m.stats.totalMatches}전 ${m.stats.win}승</td>
               <td class="px-4 py-4 text-right text-base font-black text-gray-800">${r}%</td></tr>`;
         }).join('');
+     }
+  }
+
+  function selectArchiveDate(d) {
+     selectedArchiveDate = d;
+     renderArchive();
+  }
+
+  function endTodaySession() {
+     if(confirm("오늘 모임을 최종 종료하시겠습니까?\n대기열과 코트 현황만 초기화되며 과거 기록, 승률 통계, 명단 등은 영구 보존됩니다.")) {
+        dailyQueue = [];
+        ['D','E','F'].forEach(c => {
+           courts[c].playing = null;
+           courts[c].assignedWaiting = [];
+        });
+        saveData();
+        alert("오늘의 일정이 모두 비워졌습니다. 내일 다시 등록을 시작하세요!");
      }
   }
 
@@ -576,7 +637,7 @@
      ['memName','memDept','memGen'].forEach(id => document.getElementById(id).value = '');
   }
   function delMember(n) { if(confirm("삭제하시겠습니까?")) { delete regularMembers[n]; saveData(); } }
-  function resetData() { if(confirm("파이어베이스 서버의 데이터를 완전히 삭제합니다. 복구 불가. 진행?")) { set(ref(db, 'tennis_data'), null); } }
+  function resetData() { if(confirm("파이어베이스 서버의 데이터를 완전히 삭제합니다. 과거 기록 복구 불가. 진행?")) { set(ref(db, 'tennis_data'), null); } }
 
   // --------------------------------------------------------------------------
   // BIND GLOBALS FOR HTML ONCLICK CALLS
@@ -592,12 +653,14 @@
   window.submitResult = submitResult;
   window.cancelMatchAndRestore = cancelMatchAndRestore;
   window.renderArchive = renderArchive;
+  window.selectArchiveDate = selectArchiveDate;
   window.loginAdmin = loginAdmin;
   window.saveNotice = saveNotice;
   window.toggleFCourt = toggleFCourt;
   window.saveMember = saveMember;
   window.delMember = delMember;
   window.resetData = resetData;
+  window.endTodaySession = endTodaySession;
   window.dumpDebug = () => { document.getElementById('debugOutput').innerText = JSON.stringify({appState, regularMembers, dailyQueue, courts, historyLog}, null, 2); };
 
 </script>
