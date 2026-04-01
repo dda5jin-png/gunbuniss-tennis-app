@@ -119,12 +119,19 @@
         </div>
 
         <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-          <h3 class="font-black mb-4 text-lg">진행 설정 <span class="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full ml-1 font-bold">Firebase</span></h3>
+          <h3 class="font-black mb-4 text-lg">진행 및 보안 설정 <span class="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full ml-1 font-bold">Firebase</span></h3>
           <div class="mb-4">
             <label class="text-xs font-bold text-gray-400 mb-1 block">공지 메세지</label>
             <div class="flex gap-2">
               <input type="text" id="adminNotice" class="flex-1 px-3 py-2.5 rounded-lg bg-gray-50 border border-gray-200 text-sm outline-none focus:ring-2">
               <button onclick="saveNotice()" class="bg-dark text-white px-4 rounded-lg text-sm font-bold truncate">저장</button>
+            </div>
+          </div>
+          <div class="mb-5">
+            <label class="text-xs font-bold text-gray-400 mb-1 block">관리자 비밀번호 변경</label>
+            <div class="flex gap-2">
+              <input type="password" id="newAdminPwd" placeholder="새 비밀번호 입력" class="flex-1 px-3 py-2.5 rounded-lg bg-gray-50 border border-gray-200 text-sm tracking-widest outline-none focus:ring-2">
+              <button onclick="changePassword()" class="bg-dark text-white px-4 rounded-lg text-sm font-bold truncate active:scale-95">변경</button>
             </div>
           </div>
           <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 flex justify-between items-center">
@@ -614,6 +621,16 @@
   }
   function saveNotice() { appState.notice = document.getElementById('adminNotice').value; saveData(); }
   function toggleFCourt() { appState.isFCourtDisabled = document.getElementById('fCourtToggle').checked; saveData(); }
+  function changePassword() {
+     const np = document.getElementById('newAdminPwd').value.trim();
+     if(!np) return alert("새 비밀번호를 입력하세요.");
+     if(confirm(`보안 비밀번호를 [${np}]로 완전히 변경하시겠습니까?`)) { 
+        appState.adminPassword = np; 
+        saveData(); 
+        document.getElementById('newAdminPwd').value=''; 
+        alert("비밀번호가 안전하게 변경되었습니다. 모든 기기에 반영됩니다."); 
+     }
+  }
   
   function renderAdmin() {
      document.getElementById('adminNotice').value = appState.notice;
@@ -657,6 +674,7 @@
   window.loginAdmin = loginAdmin;
   window.saveNotice = saveNotice;
   window.toggleFCourt = toggleFCourt;
+  window.changePassword = changePassword;
   window.saveMember = saveMember;
   window.delMember = delMember;
   window.resetData = resetData;
