@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>건부니스 테니스 매칭</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { primary: '#10B981', secondary: '#047857', dark: '#111827', accent: '#3B82F6' } } } }
+  </script>
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+    body { font-family: 'Pretendard', sans-serif; -webkit-tap-highlight-color: transparent; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.3s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
+    .marquee { overflow: hidden; white-space: nowrap; box-sizing: border-box; }
+    .marquee span { display: inline-block; padding-left: 100%; animation: marquee 20s linear infinite; }
+    select, input[type="text"], input[type="password"] { appearance: none; -webkit-appearance: none; }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 h-[100dvh] w-screen overflow-hidden flex justify-center">
+
+<div id="app" class="w-full max-w-md h-full bg-slate-50 flex flex-col relative shadow-xl">
+  
+  <!-- OFFLINE BANNER -->
+  <div id="offlineBanner" class="hidden bg-red-600 text-white text-center text-[11px] font-bold py-1.5 flex-shrink-0 z-[60] relative animate-pulse shadow-md">
+     <i class="fa-solid fa-wifi mr-1"></i> 네트워크 연결 끊김 - 변경사항이 여러 사람에게 공유되지 않습니다
+  </div>
+
+  <header class="bg-primary text-white shadow-md z-20 flex-shrink-0 relative overflow-hidden">
+    <div class="px-5 py-4 flex justify-between items-center relative z-10">
+      <div>
+        <h1 class="text-2xl font-black flex items-center shadow-sm">
+          <span class="bg-white text-primary w-8 h-8 rounded-full flex items-center justify-center mr-2 text-lg">🎾</span>건부니스
+        </h1>
+        <p class="text-[11px] font-medium text-emerald-100 mt-1 uppercase">건국대학교 부동산대학원 테니스동아리</p>
+      </div>
+      <button onclick="document.getElementById('debugPanel').classList.toggle('hidden')" class="opacity-50 p-2"><i class="fa-solid fa-cloud"></i></button>
+    </div>
+    <div class="bg-secondary text-xs py-2 marquee font-bold text-white/90 border-t border-emerald-600/50">
+      <span id="noticeText">공지사항이 없습니다.</span>
+    </div>
+  </header>
+
+  <main class="flex-1 overflow-y-auto pb-24 relative p-4" id="mainContent">
+    
+    <!-- HOME TAB -->
+    <section id="tab-home" class="tab-content active space-y-6">
+      
+      <!-- Queue Registration (Responsive Grid Layout) -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 relative z-30">
+        <h2 class="text-base font-bold text-gray-800 mb-3 flex items-center"><i class="fa-solid fa-user-plus mr-2 text-primary"></i> 1명씩 대기 등록</h2>
+        <div class="grid grid-cols-[1fr] gap-2">
+          <input type="text" id="regName" placeholder="본인 이름 입력" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary text-base font-bold">
+          <div class="flex gap-2">
+            <select id="regNtrp" class="flex-1 px-2 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary text-base font-bold text-center">
+              <option value="1.0">1.0</option><option value="1.5">1.5</option><option value="2.0">2.0</option>
+              <option value="2.5" selected>2.5</option><option value="3.0">3.0</option><option value="3.5">3.5</option><option value="4.0">4.0</option><option value="4.5">4.5</option><option value="5.0">5.0</option>
+            </select>
+            <button onclick="registerQueue()" class="bg-dark text-white px-6 rounded-xl font-bold shadow-md active:scale-95 flex items-center justify-center shrink-0 whitespace-nowrap"><i class="fa-solid fa-arrow-right mr-1.5"></i> 등록</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Courts Status -->
+      <div>
+        <h2 class="text-xl font-black text-gray-800 mb-3 px-1">코트 현황</h2>
+        <div id="courtsContainer" class="flex flex-col gap-4 relative z-10"></div>
+      </div>
+
+      <!-- Queue List -->
+      <div class="mt-8">
+        <div class="flex justify-between items-center mb-3 px-1">
+          <h2 class="text-xl font-black text-gray-800">대기 명단</h2>
+          <span class="text-sm font-bold text-gray-500 bg-gray-200 px-3 py-1 rounded-full"><span id="queueTotalCount">0</span>명 대기중</span>
+        </div>
+        <div id="dailyQueueContainer" class="flex flex-col gap-3 relative z-10"></div>
+      </div>
+      
+    </section>
+
+    <!-- ARCHIVE TAB -->
+    <section id="tab-archive" class="tab-content space-y-6">
+      <div class="flex justify-between items-center bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+        <h2 class="text-base font-bold text-gray-800"><i class="fa-regular fa-calendar-check mr-2 text-primary"></i>기록 조회</h2>
+        <input type="date" id="archiveDate" onchange="renderArchive()" class="border-none bg-gray-50 px-3 py-2 rounded-lg text-sm font-bold text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary">
+      </div>
+      <div>
+        <h3 class="font-bold mb-3 text-gray-500 px-1">당일 경기 로그</h3>
+        <div id="archiveMatches" class="flex flex-col gap-3"></div>
+      </div>
+      <div class="mt-8">
+        <h3 class="text-xl font-black mb-3 px-1">회원 통계</h3>
+        <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+          <table class="w-full text-left text-sm whitespace-nowrap">
+            <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-200">
+              <tr><th class="px-4 py-3">이름/소속</th><th class="px-3 py-3 text-center">전적</th><th class="px-4 py-3 text-right">승률</th></tr>
+            </thead>
+            <tbody id="statsTableBody" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADMIN TAB -->
+    <section id="tab-admin" class="tab-content space-y-6">
+      <div id="adminLoginBlock" class="bg-white rounded-3xl p-8 shadow-sm text-center border border-gray-100 mx-auto mt-10">
+        <h2 class="text-xl font-black mb-6 text-gray-700">관리자 인증</h2>
+        <input type="password" id="adminPwd" placeholder="Passcode" class="w-full px-4 py-4 rounded-xl bg-gray-50 border border-gray-200 mb-4 text-center tracking-widest font-mono text-xl outline-none focus:ring-2 focus:ring-primary">
+        <button onclick="loginAdmin()" class="w-full bg-dark text-white py-4 rounded-xl font-bold">접속하기</button>
+      </div>
+
+      <div id="adminSettingsBlock" class="hidden flex flex-col gap-6">
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <h3 class="font-black mb-4 text-lg">진행 설정 <span class="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full ml-1 font-bold">Firebase</span></h3>
+          <div class="mb-4">
+            <label class="text-xs font-bold text-gray-400 mb-1 block">공지 메세지</label>
+            <div class="flex gap-2">
+              <input type="text" id="adminNotice" class="flex-1 px-3 py-2.5 rounded-lg bg-gray-50 border border-gray-200 text-sm outline-none focus:ring-2">
+              <button onclick="saveNotice()" class="bg-dark text-white px-4 rounded-lg text-sm font-bold truncate">저장</button>
+            </div>
+          </div>
+          <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 flex justify-between items-center">
+            <span class="font-bold text-sm text-gray-800">F 코트 임시 예약제한 (레슨 등)</span>
+            <input type="checkbox" id="fCourtToggle" onchange="toggleFCourt()" class="w-6 h-6 rounded text-primary focus:ring-primaryAccent">
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <h3 class="font-black mb-4 text-lg">정회원 명단 관리</h3>
+          <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-4 flex flex-col gap-2">
+            <input type="text" id="memName" placeholder="이름 (동명이인은 김테니1 명시)" class="px-3 py-2.5 rounded-lg border border-gray-200 text-sm font-bold">
+            <div class="flex gap-2">
+              <input type="text" id="memDept" placeholder="소속/학회" class="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm">
+              <input type="text" id="memGen" placeholder="기수 (46기)" class="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm">
+            </div>
+            <div class="flex gap-2 mt-1">
+              <select id="memNtrp" class="w-24 px-3 py-2 rounded-lg border border-gray-200 text-sm font-bold"><option value="2.5" selected>2.5</option><option value="3.0">3.0</option><option value="3.5">3.5</option></select>
+              <button onclick="saveMember()" class="flex-1 bg-accent text-white rounded-lg text-sm font-bold">추가/수정</button>
+            </div>
+          </div>
+          <div class="max-h-60 overflow-y-auto border border-gray-100 rounded-xl divide-y divide-gray-50" id="adminMemberList"></div>
+        </div>
+
+        <button onclick="resetData()" class="w-full bg-red-50 text-red-600 border border-red-200 py-4 rounded-2xl text-base font-black">Firebase 서버 완전 초기화 (위험)</button>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bg-white border-t border-gray-200 flex justify-around items-center px-1 py-1 pb-safe absolute bottom-0 w-full z-40">
+    <button onclick="switchTab('home')" id="nav-home" class="nav-btn w-20 h-14 text-primary flex flex-col items-center justify-center transition-colors">
+      <i class="fa-solid fa-users text-[22px] mb-1"></i><span class="text-[10px] font-bold">대기/코트</span>
+    </button>
+    <button onclick="switchTab('archive')" id="nav-archive" class="nav-btn w-20 h-14 text-gray-400 flex flex-col items-center justify-center transition-colors">
+      <i class="fa-solid fa-chart-simple text-[22px] mb-1"></i><span class="text-[10px] font-bold">기록/통계</span>
+    </button>
+    <button onclick="switchTab('admin')" id="nav-admin" class="nav-btn w-20 h-14 text-gray-400 flex flex-col items-center justify-center transition-colors">
+      <i class="fa-solid fa-shield-halved text-[22px] mb-1"></i><span class="text-[10px] font-bold">관리자</span>
+    </button>
+  </nav>
+
+  <div id="debugPanel" class="hidden absolute top-0 left-0 w-full h-full bg-gray-900/95 text-green-400 p-5 font-mono text-xs overflow-y-auto z-[100]">
+     <button onclick="this.parentElement.classList.add('hidden')" class="bg-red-500 text-white px-3 py-1 mb-4">닫기</button>
+     <div class="mb-4">Firebase Realtime Sync Enabled v1.0</div>
+     <pre id="debugOutput"></pre>
+  </div>
+  
+  <div id="matchResultModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl">
+      <h3 class="text-xl font-black text-center mb-5">경기 결과 확정</h3>
+      <div id="modalMatchInfo" class="bg-gray-50 p-4 rounded-xl mb-6 text-center shadow-inner border border-gray-100 text-base font-bold text-gray-800"></div>
+      <div class="flex flex-col gap-3">
+        <button onclick="submitResult('A')" class="bg-blue-50 text-blue-700 py-4 rounded-2xl font-black text-lg border border-blue-200 active:scale-95">A팀 승리</button>
+        <button onclick="submitResult('B')" class="bg-red-50 text-red-700 py-4 rounded-2xl font-black text-lg border border-red-200 active:scale-95">B팀 승리</button>
+        <button onclick="submitResult('D')" class="bg-gray-100 text-gray-600 py-3 rounded-xl font-bold text-base mt-2 active:scale-95">결과 미입력 (무승부)</button>
+        <div class="border-t border-gray-100 my-1"></div>
+        <button onclick="cancelMatchAndRestore()" class="bg-gray-800 text-gray-200 py-3 rounded-xl font-bold text-sm active:scale-95 flex items-center justify-center gap-2 shadow-inner"><i class="fa-solid fa-rotate-left"></i>실수 취소 (대기열 원상 복구)</button>
+        <button onclick="closeModal()" class="text-gray-400 text-sm mt-3 underline">닫기 (모달창만)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+  import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBctnD8xuYDX3NKZwiK4w_0FcfWxcRp6bY",
+    authDomain: "kunbunniss.firebaseapp.com",
+    databaseURL: "https://kunbunniss-default-rtdb.firebaseio.com",
+    projectId: "kunbunniss",
+    storageBucket: "kunbunniss.firebasestorage.app",
+    messagingSenderId: "267444101375",
+    appId: "1:267444101375:web:68713b34caafef41e42cca"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  let appState = { notice: "건부니스 매칭 앱에 오신 것을 환영합니다!", isFCourtDisabled: false, adminPassword: "0000" };
+  let regularMembers = {}; let dailyQueue = []; let historyLog = [];
+  
+  let courts = {
+    D: { status: 'active', playing: null, assignedWaiting: [] }, 
+    E: { status: 'active', playing: null, assignedWaiting: [] },
+    F: { status: 'active', playing: null, assignedWaiting: [] }
+  };
+  let targetCourtId = null;
+
+  const UUID = () => Math.random().toString(36).substring(2, 12);
+  const formatDateStr = (ms) => new Date(ms).toLocaleTimeString('ko-KR', { hour: '2-digit', minute:'2-digit', hour12: false });
+  const getTodayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+
+  // --------------------------------------------------------------------------
+  // FIREBASE REALTIME SYNC
+  // --------------------------------------------------------------------------
+  
+  // 1. Connection state monitoring
+  const connectedRef = ref(db, ".info/connected");
+  onValue(connectedRef, (snap) => {
+    const banner = document.getElementById('offlineBanner');
+    if(banner) {
+       if (snap.val() === true) banner.classList.add('hidden');
+       else banner.classList.remove('hidden');
+    }
+  });
+
+  let hasSetDate = false;
+
+  // 2. Data Monitoring & Migration
+  const dbRef = ref(db, 'tennis_data');
+  onValue(dbRef, (snapshot) => {
+    const data = snapshot.val();
+    if(data) {
+       // Merge remote data
+       appState = data.appState || appState;
+       regularMembers = data.regularMembers || {};
+       dailyQueue = data.dailyQueue || [];
+       historyLog = data.historyLog || [];
+       if(data.courts) {
+          ['D','E','F'].forEach(c => {
+             if(data.courts[c]) courts[c] = { 
+                status: data.courts[c].status || 'active', 
+                playing: data.courts[c].playing || null, 
+                assignedWaiting: data.courts[c].assignedWaiting || [] 
+             };
+          });
+       }
+       for(let k in regularMembers) { if(!regularMembers[k].name) regularMembers[k].name = k; }
+       
+    } else {
+       // FIRST TIME FIREBASE LOAD: Attempt to upload existing LocalStorage Data
+       const rw = localStorage.getItem('gunbunis_tennis_v4_manual') || localStorage.getItem('gunbunis_tennis_v3') || localStorage.getItem('gunbunis_tennis_v2_f');
+       if(rw) {
+          const p = JSON.parse(rw);
+          if(p.appState) appState = p.appState;
+          if(p.regularMembers) regularMembers = p.regularMembers;
+          if(p.dailyQueue) dailyQueue = p.dailyQueue;
+          if(p.courts) {
+            ['D','E','F'].forEach(c => {
+               if(p.courts[c]) {
+                  courts[c].status = p.courts[c].status;
+                  courts[c].playing = p.courts[c].playing;
+                  courts[c].assignedWaiting = p.courts[c].assignedWaiting || [];
+               }
+            });
+          }
+          if(p.historyLog) historyLog = p.historyLog;
+          saveData(); 
+       }
+    }
+    
+    if(!hasSetDate) { document.getElementById('archiveDate').value = getTodayStr(); hasSetDate = true; }
+    renderUI();
+  });
+
+  // 3. Centralized Save Function
+  function saveData() {
+    set(ref(db, 'tennis_data'), { appState, regularMembers, dailyQueue, courts, historyLog });
+  }
+
+  // --------------------------------------------------------------------------
+  // UI & LOGIC FUNCTIONS
+  // --------------------------------------------------------------------------
+  function switchTab(name) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.getElementById(`tab-${name}`).classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(el => { el.classList.remove('text-primary'); el.classList.add('text-gray-400'); });
+    document.getElementById(`nav-${name}`).classList.remove('text-gray-400'); document.getElementById(`nav-${name}`).classList.add('text-primary');
+    renderUI();
+  }
+  
+  function renderUI() {
+    document.getElementById('noticeText').innerText = appState.notice;
+    courts.F.status = appState.isFCourtDisabled ? 'disabled' : 'active';
+    renderCourts(); renderDailyQueue(); renderArchive(); renderAdmin();
+  }
+
+  function registerQueue() {
+    let baseName = document.getElementById('regName').value.trim();
+    const ntrp = parseFloat(document.getElementById('regNtrp').value);
+    if(!baseName) return alert("이름을 입력하세요.");
+    if(dailyQueue.some(q => q.name === baseName)) return alert("이미 대기열에 있습니다.");
+    
+    let isCourt = false;
+    ['D','E','F'].forEach(cId => {
+       const cd = courts[cId];
+       if(cd.playing && [...cd.playing.teamA, ...cd.playing.teamB].some(p=>p.name===baseName)) isCourt = true;
+       if(cd.assignedWaiting.some(p=>p.name===baseName)) isCourt = true;
+    });
+    if(isCourt) return alert("현재 코트에 배정되어 있습니다.");
+
+    if(!regularMembers[baseName]) { regularMembers[baseName] = { name: baseName, dept: '', gen: '', ntrp, stats: { totalMatches: 0, win: 0, lose: 0 }}; }
+    const ts = Date.now();
+    dailyQueue.push({ id: UUID(), name: baseName, ntrp, round: 1, joinTime: ts, origTime: ts });
+    document.getElementById('regName').value = '';
+    
+    saveData(); 
+  }
+
+  function renderDailyQueue() {
+    const cont = document.getElementById('dailyQueueContainer');
+    document.getElementById('queueTotalCount').innerText = dailyQueue.length;
+    
+    let cSlots = {D:0,E:0,F:0}; let totalSlots = 0;
+    ['D','E','F'].forEach(c => {
+       if(courts[c].status === 'disabled') return;
+       let avail = courts[c].playing ? 0 : (4 - courts[c].assignedWaiting.length);
+       if(avail > 0) { cSlots[c] = avail; totalSlots += avail; }
+    });
+
+    if(dailyQueue.length === 0) {
+      cont.innerHTML = `<div class="text-center py-10 bg-white border border-gray-200 rounded-2xl text-gray-400 font-bold shadow-sm">기다리는 대기자가 없습니다.</div>`;
+      return;
+    }
+
+    dailyQueue.sort((a,b) => a.round !== b.round ? a.round - b.round : a.joinTime - b.joinTime);
+
+    let html = ''; let curRnd = -1;
+    dailyQueue.forEach((q, idx) => {
+      if(q.round !== curRnd) {
+        curRnd = q.round;
+        html += `<div class="mt-4 mb-2"><span class="bg-gray-800 text-white font-bold px-3 py-1 text-xs shadow rounded">라운드 ${curRnd}</span></div>`;
+      }
+
+      let hasPri = (idx === 0) && (totalSlots > 0);
+
+      let btnHtml = '';
+      let cardClass = "bg-white border-white"; 
+      let nameClass = "text-gray-800";
+      
+      if(hasPri) {
+         cardClass = "bg-blue-50 border-blue-400"; 
+         nameClass = "text-blue-900";
+         let sc = '';
+         ['D','E','F'].forEach(cId => {
+            if(cSlots[cId] > 0) sc += `<button onclick="assignToCourt('${q.id}', '${cId}')" class="flex-1 bg-white border border-blue-200 text-blue-700 py-3 rounded-xl font-black text-sm shadow-sm active:scale-95 whitespace-nowrap px-1">🎾 ${cId} 코트</button>`;
+         });
+         btnHtml = `
+         <div class="mt-4 pt-4 border-t border-blue-200">
+           <p class="text-xs font-black text-blue-800 mb-3 text-center w-full bg-blue-100 py-1.5 rounded-lg animate-pulse">☝️회원님의 선택 차례입니다. 코트나 패스를 눌러주세요.</p>
+           <div class="flex flex-wrap sm:flex-nowrap gap-2">
+             ${sc}
+             <button onclick="passTurn('${q.id}')" class="flex-1 sm:flex-none bg-gray-300 text-gray-700 py-3 px-3 rounded-xl font-bold text-sm shadow-sm active:scale-95 text-center px-1 whitespace-nowrap">패스 (양보)</button>
+           </div>
+         </div>`;
+      }
+
+      html += `
+        <div class="rounded-2xl p-5 shadow-md border-2 ${cardClass} relative mb-3">
+           <div class="flex items-center justify-between">
+             <div class="flex items-center gap-3">
+               <div class="w-8 h-8 rounded-full ${hasPri ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'} flex items-center justify-center font-black text-sm shrink-0">${idx+1}</div>
+               <div>
+                 <div class="text-base font-black ${nameClass} flex items-center gap-2">${q.name} <span class="bg-white/50 border border-gray-200 px-2 py-0.5 rounded text-xs">N.${q.ntrp}</span></div>
+                 <div class="text-xs text-gray-500 mt-0.5 font-medium">${formatDateStr(q.origTime)} 합류</div>
+               </div>
+             </div>
+             ${!hasPri ? `<button onclick="removeQueue('${q.id}')" class="w-8 h-8 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full shrink-0 flex items-center justify-center border border-gray-100"><i class="fa-solid fa-xmark"></i></button>` : ''}
+           </div>
+           ${btnHtml}
+        </div>
+      `;
+    });
+    cont.innerHTML = html;
+  }
+
+  function removeQueue(id) { dailyQueue = dailyQueue.filter(q => q.id !== id); saveData(); }
+  function passTurn(id) { const q = dailyQueue.find(x => x.id === id); if(q) { q.joinTime = Date.now(); saveData(); } }
+
+  function assignToCourt(pId, cId) {
+    const idx = dailyQueue.findIndex(x => x.id === pId); if(idx === -1) return;
+    const player = dailyQueue.splice(idx, 1)[0];
+    courts[cId].assignedWaiting.push(player);
+    if(courts[cId].assignedWaiting.length === 4) formMatch(cId);
+    saveData(); 
+  }
+
+  function formMatch(cId) {
+     const plrs = courts[cId].assignedWaiting.splice(0, 4);
+     plrs.sort((a,b) => b.ntrp - a.ntrp); 
+     courts[cId].playing = { id: UUID(), round: plrs[0].round, teamA: [plrs[0], plrs[3]], teamB: [plrs[1], plrs[2]], startTime: Date.now() };
+  }
+
+  function cancelAssignment(cId, pId) {
+     const idx = courts[cId].assignedWaiting.findIndex(x => x.id === pId);
+     if(idx > -1) { dailyQueue.push(courts[cId].assignedWaiting.splice(idx, 1)[0]); saveData(); }
+  }
+
+  function renderCourts() {
+    const cont = document.getElementById('courtsContainer');
+    let html = '';
+    ['D','E','F'].forEach(cId => {
+       const cd = courts[cId];
+       if(cd.status === 'disabled') {
+          html += `<div class="bg-gray-100 border border-gray-200 rounded-2xl p-5 flex justify-between items-center opacity-70"><span class="font-black text-gray-400 text-lg">${cId} 코트</span><span class="text-xs font-bold text-gray-500 bg-white px-2 py-1 rounded">예약불가</span></div>`;
+          return;
+       }
+
+       let cBody = '';
+       if(cd.playing) {
+         let p = cd.playing;
+         cBody += `
+           <div class="bg-emerald-50 border-2 border-emerald-400 rounded-xl p-4 shadow-sm mt-3">
+             <div class="flex justify-between items-center mb-3">
+                <span class="text-xs font-black text-emerald-700 bg-white px-3 py-1 rounded-full shadow-sm">🎾 게임 진행중</span>
+                <span class="text-xs text-emerald-700 font-bold opacity-80">${formatDateStr(p.startTime)} 시작</span>
+             </div>
+             <div class="flex justify-between items-center bg-white rounded-xl p-4 shadow-inner mb-4">
+                <div class="text-center font-bold text-sm text-gray-800 flex-1 leading-relaxed">${p.teamA[0].name}<br>${p.teamA[1].name}</div>
+                <div class="text-xs text-red-500 font-black italic px-2">VS</div>
+                <div class="text-center font-bold text-sm text-gray-800 flex-1 leading-relaxed">${p.teamB[0].name}<br>${p.teamB[1].name}</div>
+             </div>
+             <button onclick="openEndMatchModal('${cId}')" class="w-full bg-dark text-white hover:bg-black py-4 rounded-xl text-sm font-black shadow-lg active:scale-95">결과 입력 및 코트 비우기</button>
+           </div>
+         `;
+       } else {
+         if(cd.assignedWaiting.length > 0) {
+            cBody += `<div class="mt-4 bg-white border border-blue-200 rounded-xl p-3 shadow-inner">
+               <div class="text-sm font-black text-blue-600 mb-2 text-center bg-blue-50 py-1.5 rounded-lg border border-blue-100">멤버 모집중 (${cd.assignedWaiting.length}/4)</div>
+               <div class="flex flex-wrap gap-2 justify-center">`;
+            cd.assignedWaiting.forEach(w => {
+               cBody += `<div class="bg-gray-100 text-gray-800 font-bold px-3 py-2 rounded-lg shadow-sm text-sm flex gap-2 items-center">${w.name}<button onclick="cancelAssignment('${cId}', '${w.id}')" class="text-gray-400 hover:text-red-500 ml-1 active:scale-90"><i class="fa-solid fa-xmark"></i></button></div>`;
+            });
+            cBody += `</div></div>`;
+         } else {
+            cBody += `<div class="text-center py-8 mt-3 bg-white border border-dashed border-gray-300 rounded-xl text-sm font-bold text-gray-400 shadow-sm leading-relaxed">빈 코트 대기중<br><span class="text-xs font-normal">아래 대기 명단에서 코트를 선택해 주세요</span></div>`;
+         }
+       }
+
+       html += `
+         <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
+            <h3 class="font-black text-gray-800 text-lg flex items-center gap-2"><div class="bg-primary text-white w-7 h-7 flex items-center justify-center rounded-lg text-sm">${cId}</div> 코트</h3>
+            ${cBody}
+         </div>
+       `;
+    });
+    cont.innerHTML = html;
+  }
+
+  function openEndMatchModal(cId) {
+     targetCourtId = cId; const m = courts[cId].playing;
+     document.getElementById('modalMatchInfo').innerHTML = `
+       <div class="flex justify-between mb-2"><div class="text-blue-600 font-black">A팀</div><div class="text-red-600 font-black">B팀</div></div>
+       <div class="flex justify-between"><div class="text-left">${m.teamA[0].name}<br>${m.teamA[1].name}</div><div class="text-gray-300">VS</div><div class="text-right">${m.teamB[0].name}<br>${m.teamB[1].name}</div></div>
+     `;
+     document.getElementById('matchResultModal').classList.remove('hidden');
+  }
+  function closeModal() { document.getElementById('matchResultModal').classList.add('hidden'); targetCourtId = null; }
+
+  function submitResult(res) {
+     if(!targetCourtId) return;
+     const cId = targetCourtId; const m = courts[cId].playing;
+     
+     historyLog.unshift({ id: m.id, date: getTodayStr(), court: cId, winner: res, teamA: m.teamA.map(x=>x.name), teamB: m.teamB.map(x=>x.name), completedAt: Date.now() });
+
+     const udp = (pl, w) => {
+        let p = regularMembers[pl.name];
+        if(!p) return;
+        p.stats.totalMatches++;
+        if(w==='win') p.stats.win++;
+        if(w==='lose') p.stats.lose++;
+     };
+     m.teamA.forEach(p => udp(p, res==='A'?'win':(res==='B'?'lose':'draw')));
+     m.teamB.forEach(p => udp(p, res==='B'?'win':(res==='A'?'lose':'draw')));
+
+     const ts = Date.now();
+     [...m.teamA, ...m.teamB].forEach(p => { p.round += 1; p.joinTime = ts; p.origTime = ts; dailyQueue.push(p); });
+
+     courts[cId].playing = null;
+     closeModal();
+     saveData(); 
+  }
+
+  function cancelMatchAndRestore() {
+     if(!targetCourtId) return;
+     if(!confirm("진행 중인 경기를 취소하고 4명을 기존 순서 그대로 원상 복구하시겠습니까? (기록은 남지 않습니다)")) return;
+     
+     const cId = targetCourtId; 
+     const m = courts[cId].playing;
+     
+     [...m.teamA, ...m.teamB].forEach(p => { dailyQueue.push(p); });
+     
+     courts[cId].playing = null;
+     closeModal();
+     saveData(); 
+  }
+
+  function renderArchive() {
+     const dt = document.getElementById('archiveDate').value;
+     const mlist = historyLog.filter(h => h.date === dt);
+     const clast = document.getElementById('archiveMatches');
+     
+     if(mlist.length===0) clast.innerHTML = `<div class="p-6 text-center text-gray-400 bg-white border border-gray-100 rounded-2xl text-sm font-bold">기록이 없습니다.</div>`;
+     else {
+        clast.innerHTML = mlist.map(h => {
+           let bw = h.winner==='A' ? 'A 승리' : h.winner==='B' ? 'B 승리' : '친선무승부';
+           let badge = h.winner==='A' ? 'bg-blue-50 text-blue-700 border-blue-200' : h.winner==='B' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-gray-100 text-gray-600';
+           return `
+           <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-2">
+             <div class="flex justify-between items-center mb-3">
+               <span class="text-gray-500 font-bold text-xs"><span class="bg-gray-200 text-gray-700 px-2 py-1 rounded shadow-sm mr-2">${h.court}</span>${formatDateStr(h.completedAt)}</span>
+               <span class="${badge} px-2 py-1 rounded text-xs font-black border">${bw}</span>
+             </div>
+             <div class="flex gap-2 text-sm font-bold text-center">
+               <div class="flex-1 bg-gray-50 p-2 rounded">${h.teamA.join(', ')}</div>
+               <div class="flex-1 bg-gray-50 p-2 rounded">${h.teamB.join(', ')}</div>
+             </div>
+           </div>`;
+        }).join('');
+     }
+
+     const sb = document.getElementById('statsTableBody');
+     const arr = Object.values(regularMembers).filter(m => m.stats && m.stats.totalMatches > 0).sort((a,b) => b.stats.totalMatches - a.stats.totalMatches);
+     if(arr.length===0) sb.innerHTML = `<tr><td colspan="3" class="text-center py-6 text-gray-400 text-sm font-bold">기록이 없습니다.</td></tr>`;
+     else {
+        sb.innerHTML = arr.map(m => {
+           let r = Math.round((m.stats.win / m.stats.totalMatches)*100) || 0;
+           return `<tr><td class="px-4 py-4"><div class="font-black text-sm text-gray-800">${m.name}<span class="text-xs text-gray-400 ml-2 font-normal">${m.dept}</span></div></td>
+              <td class="px-3 py-4 text-center text-xs font-bold text-gray-500">${m.stats.totalMatches}전 ${m.stats.win}승</td>
+              <td class="px-4 py-4 text-right text-base font-black text-gray-800">${r}%</td></tr>`;
+        }).join('');
+     }
+  }
+
+  function loginAdmin() {
+    if(document.getElementById('adminPwd').value === appState.adminPassword) { document.getElementById('adminLoginBlock').classList.add('hidden'); document.getElementById('adminSettingsBlock').classList.remove('hidden'); renderAdmin(); } else alert("비밀번호 불일치.");
+    document.getElementById('adminPwd').value = '';
+  }
+  function saveNotice() { appState.notice = document.getElementById('adminNotice').value; saveData(); }
+  function toggleFCourt() { appState.isFCourtDisabled = document.getElementById('fCourtToggle').checked; saveData(); }
+  
+  function renderAdmin() {
+     document.getElementById('adminNotice').value = appState.notice;
+     document.getElementById('fCourtToggle').checked = appState.isFCourtDisabled;
+     const list = document.getElementById('adminMemberList');
+     const keys = Object.keys(regularMembers).sort();
+     if(keys.length===0) list.innerHTML = `<div class="p-6 text-center text-gray-400 text-xs font-bold">정회원이 없습니다.</div>`;
+     else {
+        list.innerHTML = keys.map(k => {
+           let m = regularMembers[k];
+           return `<div class="px-4 py-3 flex justify-between items-center hover:bg-gray-50"><div class="font-black text-sm text-gray-800">${m.name} <span class="bg-gray-200 text-xs px-2 py-0.5 rounded text-gray-600 ml-1">N. ${m.ntrp}</span></div><button onclick="delMember('${k}')" class="text-red-500 text-xl"><i class="fa-solid fa-trash"></i></button></div>`;
+        }).join('');
+     }
+  }
+  function saveMember() {
+     const n = document.getElementById('memName').value.trim();
+     if(!n) return alert("이름 필수");
+     if(!regularMembers[n]) regularMembers[n] = { name: n, dept:'', gen:'', ntrp:2.5, stats:{totalMatches:0,win:0,lose:0} };
+     regularMembers[n].dept = document.getElementById('memDept').value.trim(); regularMembers[n].gen = document.getElementById('memGen').value.trim(); regularMembers[n].ntrp = parseFloat(document.getElementById('memNtrp').value);
+     saveData(); 
+     ['memName','memDept','memGen'].forEach(id => document.getElementById(id).value = '');
+  }
+  function delMember(n) { if(confirm("삭제하시겠습니까?")) { delete regularMembers[n]; saveData(); } }
+  function resetData() { if(confirm("파이어베이스 서버의 데이터를 완전히 삭제합니다. 복구 불가. 진행?")) { set(ref(db, 'tennis_data'), null); } }
+
+  // --------------------------------------------------------------------------
+  // BIND GLOBALS FOR HTML ONCLICK CALLS
+  // --------------------------------------------------------------------------
+  window.switchTab = switchTab;
+  window.registerQueue = registerQueue;
+  window.removeQueue = removeQueue;
+  window.passTurn = passTurn;
+  window.assignToCourt = assignToCourt;
+  window.cancelAssignment = cancelAssignment;
+  window.openEndMatchModal = openEndMatchModal;
+  window.closeModal = closeModal;
+  window.submitResult = submitResult;
+  window.cancelMatchAndRestore = cancelMatchAndRestore;
+  window.renderArchive = renderArchive;
+  window.loginAdmin = loginAdmin;
+  window.saveNotice = saveNotice;
+  window.toggleFCourt = toggleFCourt;
+  window.saveMember = saveMember;
+  window.delMember = delMember;
+  window.resetData = resetData;
+  window.dumpDebug = () => { document.getElementById('debugOutput').innerText = JSON.stringify({appState, regularMembers, dailyQueue, courts, historyLog}, null, 2); };
+
+</script>
+</body>
+</html>
