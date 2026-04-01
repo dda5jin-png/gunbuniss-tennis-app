@@ -52,7 +52,7 @@
       <!-- Queue Registration -->
       <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 relative z-30">
         <h2 class="text-base font-bold text-gray-800 mb-3 flex items-center"><i class="fa-solid fa-user-plus mr-2 text-primary"></i> 1명씩 대기 등록</h2>
-        <div class="grid grid-cols-[1fr] gap-2">
+        <div id="regFormArea" class="grid grid-cols-[1fr] gap-2">
           <input type="text" id="regName" placeholder="본인 이름 입력" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary text-base font-bold">
           <div class="flex gap-2">
             <select id="regNtrp" class="flex-1 px-2 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary text-base font-bold text-center">
@@ -61,6 +61,9 @@
             </select>
             <button onclick="registerQueue()" class="bg-dark text-white px-6 rounded-xl font-bold shadow-md active:scale-95 flex items-center justify-center shrink-0 whitespace-nowrap"><i class="fa-solid fa-arrow-right mr-1.5"></i> 등록</button>
           </div>
+        </div>
+        <div id="regClosedArea" class="hidden text-center py-5 bg-gray-50 border border-dashed border-gray-300 rounded-xl text-gray-500 font-bold text-sm">
+           🔒 휴식중 / 모임 전<br><span class="text-xs font-normal">관리자가 출석부를 오픈할 때까지 기다려주세요.</span>
         </div>
       </div>
 
@@ -133,6 +136,10 @@
               <input type="password" id="newAdminPwd" placeholder="새 비밀번호 입력" class="flex-1 px-3 py-2.5 rounded-lg bg-gray-50 border border-gray-200 text-sm tracking-widest outline-none focus:ring-2">
               <button onclick="changePassword()" class="bg-dark text-white px-4 rounded-lg text-sm font-bold truncate active:scale-95">변경</button>
             </div>
+          </div>
+          <div class="p-4 bg-blue-50 rounded-xl border border-blue-100 flex justify-between items-center mb-3">
+            <span class="font-black text-sm text-blue-900">🚀 출석부(대기열 등록) 시스템 오픈</span>
+            <input type="checkbox" id="systemOpenToggle" onchange="toggleSystemOpen()" class="w-6 h-6 rounded text-blue-600 focus:ring-blue-500">
           </div>
           <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 flex justify-between items-center">
             <span class="font-bold text-sm text-gray-800">F 코트 임시 예약제한 (레슨 등)</span>
@@ -212,7 +219,7 @@
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  let appState = { notice: "건부니스 매칭 앱에 오신 것을 환영합니다!", isFCourtDisabled: false, adminPassword: "0000" };
+  let appState = { notice: "건부니스 매칭 앱에 오신 것을 환영합니다!", isFCourtDisabled: false, adminPassword: "0000", isSystemOpen: false };
   let regularMembers = {}; let dailyQueue = []; let historyLog = [];
   
   let courts = {
@@ -299,6 +306,16 @@
   function renderUI() {
     document.getElementById('noticeText').innerText = appState.notice;
     courts.F.status = appState.isFCourtDisabled ? 'disabled' : 'active';
+    
+    // 시스템 오픈 여부에 따라 등록창 토글
+    if(appState.isSystemOpen) {
+       document.getElementById('regFormArea').classList.remove('hidden');
+       document.getElementById('regClosedArea').classList.add('hidden');
+    } else {
+       document.getElementById('regFormArea').classList.add('hidden');
+       document.getElementById('regClosedArea').classList.remove('hidden');
+    }
+
     renderCourts(); renderDailyQueue(); renderArchive(); renderAdmin();
   }
 
@@ -610,8 +627,9 @@
            courts[c].playing = null;
            courts[c].assignedWaiting = [];
         });
+        appState.isSystemOpen = false; // 자동 마감
         saveData();
-        alert("오늘의 일정이 모두 비워졌습니다. 내일 다시 등록을 시작하세요!");
+        alert("오늘의 일정이 모두 비워지고 출석부가 마감되었습니다. 다음 모임 시 시스템을 오픈해주세요!");
      }
   }
 
@@ -621,6 +639,7 @@
   }
   function saveNotice() { appState.notice = document.getElementById('adminNotice').value; saveData(); }
   function toggleFCourt() { appState.isFCourtDisabled = document.getElementById('fCourtToggle').checked; saveData(); }
+  function toggleSystemOpen() { appState.isSystemOpen = document.getElementById('systemOpenToggle').checked; saveData(); }
   function changePassword() {
      const np = document.getElementById('newAdminPwd').value.trim();
      if(!np) return alert("새 비밀번호를 입력하세요.");
@@ -635,6 +654,7 @@
   function renderAdmin() {
      document.getElementById('adminNotice').value = appState.notice;
      document.getElementById('fCourtToggle').checked = appState.isFCourtDisabled;
+     document.getElementById('systemOpenToggle').checked = !!appState.isSystemOpen;
      const list = document.getElementById('adminMemberList');
      const keys = Object.keys(regularMembers).sort();
      if(keys.length===0) list.innerHTML = `<div class="p-6 text-center text-gray-400 text-xs font-bold">정회원이 없습니다.</div>`;
@@ -674,6 +694,7 @@
   window.loginAdmin = loginAdmin;
   window.saveNotice = saveNotice;
   window.toggleFCourt = toggleFCourt;
+  window.toggleSystemOpen = toggleSystemOpen;
   window.changePassword = changePassword;
   window.saveMember = saveMember;
   window.delMember = delMember;
