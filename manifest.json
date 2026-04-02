@@ -1,0 +1,17 @@
+{
+  "name": "건부니스 테니스 매칭",
+  "short_name": "건부니스",
+  "description": "건국대학교 부동산대학원 테니스동아리 매칭 시스템",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#10B981",
+  "theme_color": "#10B981",
+  "icons": [
+    {
+      "src": "./kunbunnis_logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

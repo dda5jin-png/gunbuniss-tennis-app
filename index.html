@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>건부니스 테니스 매칭</title>
+  
+  <!-- PWA Settings -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#10B981">
+  <link rel="apple-touch-icon" href="./kunbunnis_logo.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -31,11 +38,12 @@
 
   <header class="bg-primary text-white shadow-md z-20 flex-shrink-0 relative overflow-hidden">
     <div class="px-5 py-4 flex justify-between items-center relative z-10">
-      <div>
-        <h1 class="text-2xl font-black flex items-center shadow-sm">
-          <span class="bg-white text-primary w-8 h-8 rounded-full flex items-center justify-center mr-2 text-lg">🎾</span>건부니스
-        </h1>
-        <p class="text-[11px] font-medium text-emerald-100 mt-1 uppercase">건국대학교 부동산대학원 테니스동아리</p>
+      <div class="flex items-center gap-3">
+        <img src="kunbunnis_logo.svg" alt="kunbunnis logo" class="w-12 h-12 rounded-xl shadow-md border border-white/20">
+        <div>
+          <h1 class="text-2xl font-black shadow-sm tracking-tight">건부니스</h1>
+          <p class="text-[11px] font-medium text-emerald-100 mt-0.5 uppercase tracking-wider">부동산대학원 테니스클럽</p>
+        </div>
       </div>
       <button onclick="document.getElementById('debugPanel').classList.toggle('hidden')" class="opacity-50 p-2"><i class="fa-solid fa-cloud"></i></button>
     </div>
@@ -229,6 +237,7 @@
   };
   let targetCourtId = null;
   let selectedArchiveDate = null; // null = show full boards list
+  let archiveDisplayLimit = 3;
 
   const UUID = () => Math.random().toString(36).substring(2, 12);
   const formatDateStr = (ms) => new Date(ms).toLocaleTimeString('ko-KR', { hour: '2-digit', minute:'2-digit', hour12: false });
@@ -538,7 +547,8 @@
         if(dates.length === 0) {
            clast.innerHTML = `<div class="p-6 text-center text-gray-400 bg-white border border-gray-100 rounded-2xl text-sm font-bold shadow-sm">진행된 테니스 모임 기록이 없습니다.</div>`;
         } else {
-           clast.innerHTML = dates.map(d => {
+           const limitDates = dates.slice(0, archiveDisplayLimit);
+           let html = limitDates.map(d => {
               const mlist = historyLog.filter(h => h.date === d);
               const players = new Set();
               mlist.forEach(m => { m.teamA.forEach(n => players.add(n)); m.teamB.forEach(n => players.add(n)); });
@@ -553,6 +563,11 @@
                  <i class="fa-solid fa-chevron-right text-gray-300 group-hover:text-primary text-xl"></i>
               </div>`;
            }).join('');
+           
+           if (dates.length > archiveDisplayLimit) {
+              html += `<button onclick="loadMoreArchive()" class="w-full mt-2 py-4 bg-white border border-gray-200 shadow-sm text-gray-600 font-bold text-base rounded-2xl active:scale-95 flex items-center justify-center gap-2"><i class="fa-solid fa-plus"></i> 과거 기록 더보기</button>`;
+           }
+           clast.innerHTML = html;
         }
      } else {
         // --- 특정 날짜 요약 게시판 ---
@@ -691,6 +706,7 @@
   window.cancelMatchAndRestore = cancelMatchAndRestore;
   window.renderArchive = renderArchive;
   window.selectArchiveDate = selectArchiveDate;
+  window.loadMoreArchive = () => { archiveDisplayLimit += 3; renderArchive(); };
   window.loginAdmin = loginAdmin;
   window.saveNotice = saveNotice;
   window.toggleFCourt = toggleFCourt;
@@ -702,6 +718,16 @@
   window.endTodaySession = endTodaySession;
   window.dumpDebug = () => { document.getElementById('debugOutput').innerText = JSON.stringify({appState, regularMembers, dailyQueue, courts, historyLog}, null, 2); };
 
+  // PWA Service Worker Registration
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').then(registration => {
+        console.log('SW registered: ', registration);
+      }).catch(registrationError => {
+        console.log('SW registration failed: ', registrationError);
+      });
+    });
+  }
 </script>
 </body>
 </html>
