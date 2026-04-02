@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gunbunis-pwa-v2';
+const CACHE_NAME = 'gunbunis-pwa-v3';
 const urlsToCache = [
   './index.html',
   './kunbunnis_logo.svg',
