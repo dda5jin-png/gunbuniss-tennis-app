@@ -4,7 +4,7 @@
   </defs>
 
   <!-- Background -->
-  <rect width="680" height="680" rx="0" style="fill:rgb(15, 52, 96);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, &quot;system-ui&quot;, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <rect width="680" height="680" rx="0" style="fill:rgb(255, 255, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, &quot;system-ui&quot;, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
 
   <!-- Tennis racket (simplified, center top) -->
   <!-- Racket head: ellipse -->
@@ -35,7 +35,7 @@
   <path d="M428 260 Q440 285 428 310" stroke-width="2.5" style="fill:none;stroke:rgb(15, 52, 96);color:rgb(255, 255, 255);stroke-width:3px;stroke-linecap:round;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, &quot;system-ui&quot;, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
 
   <!-- Text -->
-  <text x="340" y="440" text-anchor="middle" style="fill:rgb(255, 255, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:system-ui, sans-serif;font-size:58px;font-weight:700;text-anchor:middle;dominant-baseline:auto">건부니스</text>
+  <text x="340" y="440" text-anchor="middle" style="fill:rgb(15, 52, 96);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:system-ui, sans-serif;font-size:58px;font-weight:700;text-anchor:middle;dominant-baseline:auto">건부니스</text>
   <text x="340" y="490" text-anchor="middle" style="fill:rgb(232, 200, 74);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:system-ui, sans-serif;font-size:26px;font-weight:400;text-anchor:middle;dominant-baseline:auto">kunbunnis</text>
 
   <!-- Decorative lines -->
