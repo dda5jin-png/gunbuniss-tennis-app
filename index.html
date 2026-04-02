@@ -19,6 +19,8 @@
   <style>
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
     body { font-family: 'Pretendard', sans-serif; -webkit-tap-highlight-color: transparent; }
+    .pt-safe { padding-top: env(safe-area-inset-top); }
+    .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 0.5rem); }
     .tab-content { display: none; }
     .tab-content.active { display: block; animation: fadeIn 0.3s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -36,7 +38,7 @@
      <i class="fa-solid fa-wifi mr-1"></i> 네트워크 연결 끊김 - 변경사항이 여러 사람에게 공유되지 않습니다
   </div>
 
-  <header class="bg-primary text-white shadow-md z-20 flex-shrink-0 relative overflow-hidden">
+  <header class="bg-primary text-white shadow-md z-20 flex-shrink-0 relative overflow-hidden pt-safe">
     <div class="px-5 py-4 flex justify-between items-center relative z-10">
       <div class="flex items-center gap-3">
         <img src="kunbunnis_logo.svg" alt="kunbunnis logo" class="w-12 h-12 rounded-xl shadow-md border border-white/20">
