@@ -809,7 +809,13 @@
      const rankedMembers = members
        .filter(m => m.stats && m.stats.totalMatches > 0) // 최소 1게임 이상 대상
        .sort((a,b) => {
-          // 5게임 이상인 사람을 우선적으로 상단 배치할 수도 있음 (선택사항)
+          const isQA = a.stats.totalMatches >= 5;
+          const isQB = b.stats.totalMatches >= 5;
+          
+          // 1단계: 정식 랭킹(5게임 이상)인 사람을 우선 배치
+          if(isQA !== isQB) return isQA ? -1 : 1;
+          
+          // 2단계: 같은 그룹(정식 vs 정식, 대기 vs 대기) 내에서 승률순 정렬
           const wrA = a.stats.win / a.stats.totalMatches;
           const wrB = b.stats.win / b.stats.totalMatches;
           if(wrB !== wrA) return wrB - wrA;
