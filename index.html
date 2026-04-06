@@ -228,9 +228,13 @@
           </div>
           <div id="manualAttendanceList" class="max-h-40 overflow-y-auto border border-gray-100 rounded-xl divide-y divide-gray-50 bg-gray-50"></div>
         </div>
-          <h3 class="font-black mb-3 text-lg text-orange-800"><i class="fa-solid fa-broom mr-1"></i> 테스트 데이터 삭제 및 정리</h3>
-          <p class="text-xs text-orange-600 font-bold mb-4">4/1, 4/3 기록을 삭제하고 승률을 재계산합니다. (4/5 기록은 유지)</p>
-          <button onclick="cleanupTestData()" class="w-full bg-orange-600 border border-orange-700 text-white py-4 rounded-xl text-base font-black shadow-md active:scale-95">데이터 정리 실행</button>
+        <div class="bg-orange-50 rounded-2xl p-5 shadow-sm border border-orange-100">
+          <h3 class="font-black mb-3 text-lg text-orange-800"><i class="fa-solid fa-broom mr-1"></i> 데이터 선택 삭제 및 정리</h3>
+          <p class="text-[10px] text-orange-600 font-bold mb-4 tracking-tight leading-relaxed">특정 날짜의 모든 기록을 삭제하고 남은 데이터로 전적을 재계산합니다. (잘못 입력된 날짜 정리용)</p>
+          <div class="flex flex-col gap-2">
+            <input type="date" id="cleanupDate" class="w-full px-3 py-3 rounded-xl border border-orange-200 text-sm font-bold bg-white focus:outline-none focus:ring-2 focus:ring-orange-400">
+            <button onclick="cleanupTestData()" class="w-full bg-orange-600 border border-orange-700 text-white py-4 rounded-xl text-base font-black shadow-md active:scale-95">선택한 날짜 데이터 정리 실행</button>
+          </div>
         </div>
 
         <button onclick="resetData()" class="w-full bg-gray-50 text-gray-500 border border-gray-200 py-4 rounded-2xl text-xs font-bold mt-4">초기화: 서버 DB 자체를 영구 파괴 (절대 주의)</button>
@@ -934,17 +938,21 @@
   }
 
   function cleanupTestData() {
-     if(!confirm("4/1, 4/3 테스트 데이터를 삭제하고 모든 통계를 재계산하시겠습니까? (4/5 기록은 유지됩니다)")) return;
+     const date = document.getElementById('cleanupDate').value;
+     if(!date) return alert("삭제할 날짜를 선택해 주세요.");
      
-     // 1. Filter log
-     historyLog = historyLog.filter(h => h.date !== '2026-04-01' && h.date !== '2026-04-03');
+     if(!confirm(`${date}일의 모든 경기 및 참석 기록을 삭제하고 전적을 재계산하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return;
      
-     // 2. Reset stats for all members
+     // 1. 경기 기록 및 수동 참석 기록 필터링
+     historyLog = historyLog.filter(h => h.date !== date);
+     manualAttendance = manualAttendance.filter(m => m.date !== date);
+     
+     // 2. 모든 회원의 통계 초기화
      for(let name in regularMembers) {
         regularMembers[name].stats = { totalMatches: 0, win: 0, lose: 0 };
      }
      
-     // 3. Re-calculate stats from remaining historyLog (backwards)
+     // 3. 남은 경기 기록으로 통계 재산출
      [...historyLog].reverse().forEach(h => {
         const res = h.winner;
         h.teamA.forEach(name => {
@@ -964,7 +972,7 @@
      });
      
      saveData();
-     alert("데이터 정리가 완료되었습니다!");
+     alert(`${date}일 데이터 정리가 완료되고 통계가 재산출되었습니다.`);
   }
 
   // --------------------------------------------------------------------------
