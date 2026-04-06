@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>건부니스 앱 설치 안내</title>
+  <style>
+    body {
+        margin: 0;
+        padding: 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: transparent; /* 스크린샷 캡쳐용 투명 배경 */
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    
+    .card {
+        width: 1000px;
+        height: auto;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 70px 60px;
+        box-sizing: border-box;
+        border-radius: 24px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .header {
+        text-align: center;
+        margin-bottom: 60px;
+    }
+    .header h1 {
+        font-size: 56px;
+        margin: 0;
+        font-weight: 800;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+    .header p {
+        font-size: 28px;
+        margin-top: 20px;
+        opacity: 0.9;
+    }
+    
+    .content-wrapper {
+        display: flex;
+        gap: 30px;
+    }
+    
+    .os-section {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 40px 30px;
+        border: 1px solid rgba(255,255,255,0.3);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .os-title {
+        font-size: 38px;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 40px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid rgba(255,255,255,0.2);
+    }
+    
+    .step {
+        margin-bottom: 35px;
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+    }
+    .step:last-child {
+        margin-bottom: 0;
+    }
+    
+    .step-number {
+        background: white;
+        color: #059669;
+        width: 44px;
+        height: 44px;
+        border-radius: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: bold;
+        flex-shrink: 0;
+    }
+    
+    .step-text {
+        font-size: 26px;
+        line-height: 1.4;
+        padding-top: 4px;
+        word-break: keep-all; 
+    }
+    
+    .footer {
+        text-align: center;
+        font-size: 26px;
+        margin-top: 50px;
+        padding-top: 30px;
+        border-top: 2px dashed rgba(255,255,255,0.3);
+        opacity: 0.9;
+        font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <h1>🎾 건부니스 테니스 앱 설치 안내 🎾</h1>
+      <p>홈 화면에 추가하고 전용 앱처럼 편리하게 사용해보세요!</p>
+    </div>
+    
+    <div class="content-wrapper">
+      <div class="os-section">
+        <div class="os-title">🍎 아이폰 (Safari)</div>
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-text">화면 하단의 <b>'공유'</b> 아이콘<br>(사각형에 화살표 ⬆️)을 누릅니다.</div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-text">메뉴를 위로 스크롤하여<br><b>'홈 화면에 추가'</b> (➕)를 선택합니다.</div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-text">우측 상단의 <b>'추가'</b>를 누르면<br>바탕화면에 아이콘이 생성됩니다.</div>
+        </div>
+      </div>
+
+      <div class="os-section">
+        <div class="os-title">🤖 안드로이드 (Chrome)</div>
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-text">화면 우측 상단의 <b>'메뉴'</b> 아이콘<br>(점 3개 ⋮)을 누릅니다.</div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-text">메뉴 목록에서<br><b>'홈 화면에 추가'</b> 또는 <b>'앱 설치'</b>를 선택합니다.</div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-text">팝업창에서 <b>'설치'</b>를 누르면<br>바탕화면에 아이콘이 생성됩니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      💡 바탕화면에 생성된 '건부니스' 아이콘을 눌러주시면 모바일 앱으로 실행됩니다!
+    </div>
+  </div>
+</body>
+</html>

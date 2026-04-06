@@ -94,6 +94,49 @@
       
     </section>
 
+    <!-- RANKINGS TAB -->
+    <section id="tab-rankings" class="tab-content space-y-6">
+      <div class="flex gap-2 p-1 bg-gray-200 rounded-xl">
+        <button id="rank-tab-winrate" onclick="switchRankSubTab('winrate')" class="flex-1 py-2 text-sm font-bold rounded-lg bg-white shadow-sm text-primary">랭킹순위</button>
+        <button id="rank-tab-attendance" onclick="switchRankSubTab('attendance')" class="flex-1 py-2 text-sm font-bold rounded-lg text-gray-500">참석순위</button>
+      </div>
+
+      <div id="subtab-winrate" class="rank-subtab active">
+        <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 mb-4">
+          <p class="text-[11px] font-bold text-blue-700 leading-tight">
+            ※ 랭킹 산정 기준: 복식 게임 기준 개별 승률순<br>
+            ※ 최소 게임 횟수(5회 이상) 초과자 대상<br>
+            ※ 동률 시: 게임 수(많은 순) > NTRP(낮은 순)
+          </p>
+        </div>
+        <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+          <table class="w-full text-left text-sm whitespace-nowrap">
+            <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-200">
+              <tr><th class="px-4 py-3">순위/이름</th><th class="px-3 py-3 text-center">전적</th><th class="px-4 py-3 text-right">승률</th></tr>
+            </thead>
+            <tbody id="rankingTableBody" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="subtab-attendance" class="rank-subtab hidden">
+        <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 mb-4">
+          <p class="text-[11px] font-bold text-emerald-700 leading-tight">
+            ※ 참석 순위 산정 기준: 4/5 이후 모임 참여 횟수<br>
+            ※ 게임에 한 번이라도 참여한 날짜를 기준으로 집계합니다.
+          </p>
+        </div>
+        <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+          <table class="w-full text-left text-sm whitespace-nowrap">
+            <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-200">
+              <tr><th class="px-4 py-3">순위/이름</th><th class="px-4 py-3 text-right">참석 횟수</th></tr>
+            </thead>
+            <tbody id="attendanceTableBody" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <!-- ARCHIVE TAB -->
     <section id="tab-archive" class="tab-content space-y-6">
       <div>
@@ -173,20 +216,29 @@
           <div class="max-h-60 overflow-y-auto border border-gray-100 rounded-xl divide-y divide-gray-50" id="adminMemberList"></div>
         </div>
 
+        <div class="bg-orange-50 rounded-2xl p-5 shadow-sm border border-orange-100">
+          <h3 class="font-black mb-3 text-lg text-orange-800"><i class="fa-solid fa-broom mr-1"></i> 테스트 데이터 삭제 및 정리</h3>
+          <p class="text-xs text-orange-600 font-bold mb-4">4/1, 4/3 기록을 삭제하고 승률을 재계산합니다. (4/5 기록은 유지)</p>
+          <button onclick="cleanupTestData()" class="w-full bg-orange-600 border border-orange-700 text-white py-4 rounded-xl text-base font-black shadow-md active:scale-95">데이터 정리 실행</button>
+        </div>
+
         <button onclick="resetData()" class="w-full bg-gray-50 text-gray-500 border border-gray-200 py-4 rounded-2xl text-xs font-bold mt-4">초기화: 서버 DB 자체를 영구 파괴 (절대 주의)</button>
       </div>
     </section>
   </main>
 
   <nav class="bg-white border-t border-gray-200 flex justify-around items-center px-1 py-1 pb-safe absolute bottom-0 w-full z-40">
-    <button onclick="switchTab('home')" id="nav-home" class="nav-btn w-20 h-14 text-primary flex flex-col items-center justify-center transition-colors">
-      <i class="fa-solid fa-users text-[22px] mb-1"></i><span class="text-[10px] font-bold">대기/코트</span>
+    <button onclick="switchTab('home')" id="nav-home" class="nav-btn w-16 h-14 text-primary flex flex-col items-center justify-center transition-colors">
+      <i class="fa-solid fa-users text-[20px] mb-1"></i><span class="text-[9px] font-bold">대기/코트</span>
     </button>
-    <button onclick="switchTab('archive')" id="nav-archive" class="nav-btn w-20 h-14 text-gray-400 flex flex-col items-center justify-center transition-colors">
-      <i class="fa-solid fa-chart-simple text-[22px] mb-1"></i><span class="text-[10px] font-bold">기록/통계</span>
+    <button onclick="switchTab('rankings')" id="nav-rankings" class="nav-btn w-16 h-14 text-gray-400 flex flex-col items-center justify-center transition-colors">
+      <i class="fa-solid fa-ranking-star text-[20px] mb-1"></i><span class="text-[9px] font-bold">순위/참석</span>
     </button>
-    <button onclick="switchTab('admin')" id="nav-admin" class="nav-btn w-20 h-14 text-gray-400 flex flex-col items-center justify-center transition-colors">
-      <i class="fa-solid fa-shield-halved text-[22px] mb-1"></i><span class="text-[10px] font-bold">관리자</span>
+    <button onclick="switchTab('archive')" id="nav-archive" class="nav-btn w-16 h-14 text-gray-400 flex flex-col items-center justify-center transition-colors">
+      <i class="fa-solid fa-chart-simple text-[20px] mb-1"></i><span class="text-[9px] font-bold">기록/통계</span>
+    </button>
+    <button onclick="switchTab('admin')" id="nav-admin" class="nav-btn w-16 h-14 text-gray-400 flex flex-col items-center justify-center transition-colors">
+      <i class="fa-solid fa-shield-halved text-[20px] mb-1"></i><span class="text-[9px] font-bold">관리자</span>
     </button>
   </nav>
 
@@ -230,7 +282,7 @@
   const db = getDatabase(app);
 
   let appState = { notice: "건부니스 매칭 앱에 오신 것을 환영합니다!", isFCourtDisabled: false, adminPassword: "0000", isSystemOpen: false };
-  let regularMembers = {}; let dailyQueue = []; let historyLog = [];
+  let regularMembers = {}; let dailyQueue = []; let historyLog = []; let lessonQueue = [];
   
   let courts = {
     D: { status: 'active', playing: null, assignedWaiting: [] }, 
@@ -301,7 +353,7 @@
     renderUI();
   });
 
-  function saveData() { set(ref(db, 'tennis_data'), { appState, regularMembers, dailyQueue, courts, historyLog }); }
+  function saveData() { set(ref(db, 'tennis_data'), { appState, regularMembers, dailyQueue, courts, historyLog, lessonQueue }); }
 
   // --------------------------------------------------------------------------
   // UI & LOGIC FUNCTIONS
@@ -327,7 +379,19 @@
        document.getElementById('regClosedArea').classList.remove('hidden');
     }
 
-    renderCourts(); renderDailyQueue(); renderArchive(); renderAdmin();
+    renderCourts(); renderDailyQueue(); renderArchive(); renderAdmin(); renderRankAndAttendance();
+  }
+
+  function switchRankSubTab(tab) {
+    document.querySelectorAll('.rank-subtab').forEach(el => el.classList.add('hidden'));
+    document.getElementById(`subtab-${tab}`).classList.remove('hidden');
+    document.querySelectorAll('[id^="rank-tab-"]').forEach(el => {
+      el.classList.remove('bg-white', 'shadow-sm', 'text-primary');
+      el.classList.add('text-gray-500');
+    });
+    const activeBtn = document.getElementById(`rank-tab-${tab}`);
+    activeBtn.classList.remove('text-gray-500');
+    activeBtn.classList.add('bg-white', 'shadow-sm', 'text-primary');
   }
 
   function registerQueue() {
@@ -352,6 +416,27 @@
     saveData(); 
   }
 
+  function moveToLesson(id) {
+    const idx = dailyQueue.findIndex(q => q.id === id);
+    if(idx === -1) return;
+    const player = dailyQueue.splice(idx, 1)[0];
+    lessonQueue.push({...player, lessonStartTime: Date.now()});
+    saveData();
+  }
+
+  function returnFromLesson(id) {
+    const idx = lessonQueue.findIndex(q => q.id === id);
+    if(idx === -1) return;
+    const player = lessonQueue.splice(idx, 1)[0];
+    const ts = Date.now();
+    player.joinTime = ts; 
+    player.origTime = ts;
+    delete player.lessonStartTime;
+    player.round = 1; 
+    dailyQueue.push(player);
+    saveData();
+  }
+
   function renderDailyQueue() {
     const cont = document.getElementById('dailyQueueContainer');
     document.getElementById('queueTotalCount').innerText = dailyQueue.length;
@@ -363,7 +448,7 @@
        if(avail > 0) { cSlots[c] = avail; totalSlots += avail; }
     });
 
-    if(dailyQueue.length === 0) {
+    if(dailyQueue.length === 0 && lessonQueue.length === 0) {
       cont.innerHTML = `<div class="text-center py-10 bg-white border border-gray-200 rounded-2xl text-gray-400 font-bold shadow-sm">기다리는 대기자가 없습니다.</div>`;
       return;
     }
@@ -395,6 +480,7 @@
            <p class="text-xs font-black text-blue-800 mb-3 text-center w-full bg-blue-100 py-1.5 rounded-lg animate-pulse">☝️회원님의 선택 차례입니다. 코트나 패스를 눌러주세요.</p>
            <div class="flex flex-wrap sm:flex-nowrap gap-2">
              ${sc}
+             ${appState.isFCourtDisabled ? `<button onclick="moveToLesson('${q.id}')" class="flex-1 bg-orange-50 border border-orange-200 text-orange-700 py-3 rounded-xl font-black text-sm shadow-sm active:scale-95 whitespace-nowrap px-1">🎓 레슨</button>` : ''}
              <button onclick="passTurn('${q.id}')" class="flex-1 sm:flex-none bg-gray-300 text-gray-700 py-3 px-3 rounded-xl font-bold text-sm shadow-sm active:scale-95 text-center px-1 whitespace-nowrap">패스 (양보)</button>
            </div>
          </div>`;
@@ -416,6 +502,27 @@
         </div>
       `;
     });
+
+    if(lessonQueue.length > 0) {
+      html += `<div class="mt-8 mb-3"><span class="bg-orange-500 text-white font-bold px-3 py-1 text-xs shadow rounded">🎓 레슨 중 (대기 열외)</span></div>`;
+      lessonQueue.forEach(q => {
+        html += `
+          <div class="bg-orange-50 rounded-2xl p-4 shadow-sm border border-orange-200 mb-3">
+             <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                   <div class="w-8 h-8 rounded-full bg-white text-orange-600 flex items-center justify-center font-black text-sm shrink-0 border border-orange-100"><i class="fa-solid fa-graduation-cap"></i></div>
+                   <div>
+                     <div class="text-base font-black text-orange-900">${q.name} <span class="bg-white/50 border border-orange-200 px-2 py-0.5 rounded text-xs">N.${q.ntrp}</span></div>
+                     <div class="text-[10px] text-orange-500 mt-0.5 font-bold">레슨 시작: ${formatDateStr(q.lessonStartTime)}</div>
+                   </div>
+                </div>
+                <button onclick="returnFromLesson('${q.id}')" class="bg-white border border-orange-300 text-orange-700 px-4 py-2 rounded-xl text-xs font-black shadow-sm active:scale-95">복귀하기</button>
+             </div>
+          </div>
+        `;
+      });
+    }
+
     cont.innerHTML = html;
   }
 
@@ -693,11 +800,114 @@
   function delMember(n) { if(confirm("삭제하시겠습니까?")) { delete regularMembers[n]; saveData(); } }
   function resetData() { if(confirm("파이어베이스 서버의 데이터를 완전히 삭제합니다. 과거 기록 복구 불가. 진행?")) { set(ref(db, 'tennis_data'), null); } }
 
+  function renderRankAndAttendance() {
+     const winnersBody = document.getElementById('rankingTableBody');
+     const attendanceBody = document.getElementById('attendanceTableBody');
+     
+     // 1. Ranking (Individual Win Rate) - 모든 참여 인원 포함
+     const members = Object.values(regularMembers);
+     const rankedMembers = members
+       .filter(m => m.stats && m.stats.totalMatches > 0) // 최소 1게임 이상 대상
+       .sort((a,b) => {
+          // 5게임 이상인 사람을 우선적으로 상단 배치할 수도 있음 (선택사항)
+          const wrA = a.stats.win / a.stats.totalMatches;
+          const wrB = b.stats.win / b.stats.totalMatches;
+          if(wrB !== wrA) return wrB - wrA;
+          if(b.stats.totalMatches !== a.stats.totalMatches) return b.stats.totalMatches - a.stats.totalMatches;
+          return a.ntrp - b.ntrp;
+       });
+
+     if(rankedMembers.length === 0) {
+        winnersBody.innerHTML = `<tr><td colspan="3" class="text-center py-10 text-gray-400 font-bold text-sm">플레이 기록이 있는 회원이 없습니다.</td></tr>`;
+     } else {
+        winnersBody.innerHTML = rankedMembers.map((m, idx) => {
+          let r = Math.round((m.stats.win / m.stats.totalMatches)*100) || 0;
+          const isQualified = m.stats.totalMatches >= 5;
+          return `<tr>
+            <td class="px-4 py-4 flex items-center gap-3">
+              <span class="text-xs font-black ${idx<3 ? 'text-blue-600 bg-blue-50 w-5 h-5 flex items-center justify-center rounded-full' : 'text-gray-400'}">${idx+1}</span>
+              <div>
+                <div class="font-black text-sm text-gray-800">${m.name} <span class="text-xs text-gray-400 font-normal">N.${m.ntrp}</span></div>
+                ${!isQualified ? '<div class="text-[9px] text-orange-400 font-bold">판정 대기 (5경기 미만)</div>' : ''}
+              </div>
+            </td>
+            <td class="px-3 py-4 text-center text-xs font-bold text-gray-400">${m.stats.totalMatches}전 ${m.stats.win}승</td>
+            <td class="px-4 py-4 text-right text-base font-black text-blue-700">${r}%</td>
+          </tr>`;
+        }).join('');
+     }
+
+     // 2. Attendance (Participations since 4/5)
+     const attendanceMap = {};
+     historyLog.forEach(h => {
+        if(h.date >= '2026-04-05') {
+           const users = [...new Set([...h.teamA, ...h.teamB])];
+           users.forEach(u => {
+              if(!attendanceMap[u]) attendanceMap[u] = new Set();
+              attendanceMap[u].add(h.date);
+           });
+        }
+     });
+
+     const attList = Object.keys(attendanceMap).map(name => ({ name, count: attendanceMap[name].size })).sort((a,b) => b.count - a.count || a.name.localeCompare(b.name));
+
+     if(attList.length === 0) {
+        attendanceBody.innerHTML = `<tr><td colspan="2" class="text-center py-10 text-gray-400 font-bold text-sm">4/5 이후 참석 데이터가 없습니다.</td></tr>`;
+     } else {
+        attendanceBody.innerHTML = attList.map((a, idx) => `<tr>
+           <td class="px-4 py-4">
+              <div class="flex items-center gap-3">
+                <span class="text-xs font-black ${idx<3 ? 'text-emerald-600 bg-emerald-50 w-5 h-5 flex items-center justify-center rounded-full' : 'text-gray-400'}">${idx+1}</span>
+                <span class="font-black text-sm text-gray-800">${a.name}</span>
+              </div>
+           </td>
+           <td class="px-4 py-4 text-right text-base font-black text-emerald-700">${a.count}회</td>
+        </tr>`).join('');
+     }
+  }
+
+  function cleanupTestData() {
+     if(!confirm("4/1, 4/3 테스트 데이터를 삭제하고 모든 통계를 재계산하시겠습니까? (4/5 기록은 유지됩니다)")) return;
+     
+     // 1. Filter log
+     historyLog = historyLog.filter(h => h.date !== '2026-04-01' && h.date !== '2026-04-03');
+     
+     // 2. Reset stats for all members
+     for(let name in regularMembers) {
+        regularMembers[name].stats = { totalMatches: 0, win: 0, lose: 0 };
+     }
+     
+     // 3. Re-calculate stats from remaining historyLog (backwards)
+     [...historyLog].reverse().forEach(h => {
+        const res = h.winner;
+        h.teamA.forEach(name => {
+           if(regularMembers[name]) {
+              regularMembers[name].stats.totalMatches++;
+              if(res === 'A') regularMembers[name].stats.win++;
+              else if(res === 'B') regularMembers[name].stats.lose++;
+           }
+        });
+        h.teamB.forEach(name => {
+           if(regularMembers[name]) {
+              regularMembers[name].stats.totalMatches++;
+              if(res === 'B') regularMembers[name].stats.win++;
+              else if(res === 'A') regularMembers[name].stats.lose++;
+           }
+        });
+     });
+     
+     saveData();
+     alert("데이터 정리가 완료되었습니다!");
+  }
+
   // --------------------------------------------------------------------------
   // BIND GLOBALS FOR HTML ONCLICK CALLS
   // --------------------------------------------------------------------------
   window.switchTab = switchTab;
+  window.switchRankSubTab = switchRankSubTab;
   window.registerQueue = registerQueue;
+  window.moveToLesson = moveToLesson;
+  window.returnFromLesson = returnFromLesson;
   window.removeQueue = removeQueue;
   window.passTurn = passTurn;
   window.assignToCourt = assignToCourt;
@@ -718,7 +928,8 @@
   window.delMember = delMember;
   window.resetData = resetData;
   window.endTodaySession = endTodaySession;
-  window.dumpDebug = () => { document.getElementById('debugOutput').innerText = JSON.stringify({appState, regularMembers, dailyQueue, courts, historyLog}, null, 2); };
+  window.cleanupTestData = cleanupTestData;
+  window.dumpDebug = () => { document.getElementById('debugOutput').innerText = JSON.stringify({appState, regularMembers, dailyQueue, courts, historyLog, lessonQueue}, null, 2); };
 
   // PWA Service Worker Registration
   if ('serviceWorker' in navigator) {
